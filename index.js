@@ -1,4 +1,5 @@
 console.log('js init');
+console.log(collisions ? 'collisions loaded' : 'error loading collisions');
 
 /***** canvas setup *****/
 
@@ -13,9 +14,44 @@ const context = canvas.getContext('2d');
 canvas.width = 1024;
 canvas.height = 576;
 
-// Set the background color
-context.fillStyle = 'white';
-context.fillRect(0, 0, canvas.width, canvas.height);
+const collisionsMap = [];
+for (let i = 0; i < collisions.length; i+=70) { // width of map (tiles) is 70
+    collisionsMap.push(collisions.slice(i, i + 70)); // grab the first 70 elements, then the next 70, etc.
+}
+
+class Boundary {
+    static width = 48;
+    static height = 48;
+    constructor({
+        position,
+    }) {
+        this.position = position;
+        this.width = 48
+        this.height = 48
+    }
+
+    draw() {
+        context.fillStyle = 'red';
+        context.fillRect(this.position.x, this.position.y, this.width, this.height);
+    }
+}
+
+const boundaries = [];
+
+collisionsMap.forEach((row, i) => {
+    row.forEach((tile, j) => {
+        if (tile === 1025) {
+            boundaries.push(new Boundary({
+                position: { 
+                    x: j * Boundary.width, // from static values set inside Boundary class
+                    y: i * Boundary.height 
+                } 
+            }))
+        }
+    })
+})
+
+console.log(boundaries);
 
 /***** init place images (map / player) on canvas *****/
 
