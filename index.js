@@ -1,5 +1,7 @@
 console.log('js init');
 
+/***** canvas setup *****/
+
 // Get the canvas element
 const canvas = document.querySelector('canvas');
 
@@ -14,6 +16,8 @@ canvas.height = 576;
 // Set the background color
 context.fillStyle = 'white';
 context.fillRect(0, 0, canvas.width, canvas.height);
+
+/***** init place images (map / player) on canvas *****/
 
 // create html image element with js api
 const mapImage = new Image();
@@ -34,10 +38,62 @@ playerImage.src = './assets/playerDown.png';
 // additionally- we need to make sure we load the map image first, then the player image because the map image is larger and takes longer to load
 // if we don't do this in order, the map image will be drawn over the player image and we won't see the player
 
-mapImage.onload = () => {
-    context.drawImage(mapImage, -785, -650); // adjust starting map view coordinates
+// Note: we then moved this draw image functionality to the animate function in order to animate the player sprite
 
+/***** player movement  *****/
+
+// create a class for the player
+// by passing arguments to the constructor via an object, we don't have to remember the specific order in which we need to pass arguments
+class Sprite {
+    constructor({
+        position,
+        velocity,
+        image,
+    }) {
+        this.position = position;
+        this.image = image;
+        this.velocity = velocity;
+    }
+
+    draw() {
+        context.drawImage(this.image, this.position.x, this.position.y);
+    }
+};
+
+
+const background = new Sprite({
+    position: {
+        x: -785,
+        y: -650,
+    },
+    image: mapImage
+})
+
+const keys = {
+    w: {
+        pressed: false,
+    },
+    a: {
+        pressed: false,
+    },
+    s: {
+        pressed: false,
+    },
+    d: {
+        pressed: false,
+    },
+}
+
+// loop over this function to animate the player sprite
+// in this case it's ok to create an infinite loop?
+function animate() {
+    window.requestAnimationFrame(animate);
     // args are: https://developer.mozilla.org/en-US/docs/Web/API/CanvasRenderingContext2D/drawImage
+
+    // map
+    background.draw(); // render map image
+
+    // player
     context.drawImage(
         playerImage,
         0, // crop the player image 
@@ -50,4 +106,54 @@ mapImage.onload = () => {
         playerImage.height, // render height
     )
 
-}
+    /***** control player movement *****/
+
+    if (keys.w.pressed && lastKey === 'w') background.position.y = background.position.y += 3;      // up
+    else if (keys.s.pressed && lastKey === 's') background.position.y = background.position.y -= 3; // down
+    else if (keys.a.pressed && lastKey === 'a') background.position.x = background.position.x += 3; // left
+    else if (keys.d.pressed && lastKey === 'd') background.position.x = background.position.x -= 3; // right 
+};
+
+// call the animate function
+animate();
+
+// add event listener for keydown events 
+let lastKey = ''; // allows us to track the last key pressed making user input smoother
+window.addEventListener('keydown', (event) => {
+    switch (event.key) {
+        case 'w':
+            keys.w.pressed = true;
+            lastKey = 'w';
+            break;
+        case 's':
+            keys.s.pressed = true;
+            lastKey = 's'
+            break;
+        case 'a':
+            keys.a.pressed = true;
+            lastKey = 'a'
+            break;
+        case 'd':
+            keys.d.pressed = true;
+            lastKey = 'd'
+            break;
+    }
+});
+
+// add event listener for keydown events 
+window.addEventListener('keyup', (event) => {
+    switch (event.key) {
+        case 'w':
+            keys.w.pressed = false;
+            break;
+        case 's':
+            keys.s.pressed = false;
+            break;
+        case 'a':
+            keys.a.pressed = false;
+            break;
+        case 'd':
+            keys.d.pressed = false;
+            break;
+    }
+});
