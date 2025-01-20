@@ -58,15 +58,13 @@ collisionsMap.forEach((row, i) => {
     })
 })
 
-console.log(boundaries);
-
-/***** init place images (map / player) on canvas *****/
+/***** init images & place on canvas *****/
 
 // create html image element with js api
 const mapImage = new Image();
 const playerImage = new Image();
 
-// set the image source
+// set image sources
 mapImage.src = './assets/placeholder-map.png';
 playerImage.src = './assets/playerDown.png';
 
@@ -92,16 +90,46 @@ class Sprite {
         position,
         velocity,
         image,
+        frames = { max: 1 },
     }) {
         this.position = position;
         this.image = image;
-        this.velocity = velocity;
+        this.frames = frames;
+
+        // need to wait until image is fully loaded
+        this.image.onload = () => {
+            this.width = this.image.width / this.frames.max
+            this.height = this.image.height
+            console.log('sprite image width: ', this.width)
+            console.log('sprite image height: ', this.height)
+        }
     }
 
     draw() {
-        context.drawImage(this.image, this.position.x, this.position.y);
+        context.drawImage(
+            this.image,
+            0, // crop the player image into 4 sections, each section is 48x48
+            0,
+            this.image.width / this.frames.max,
+            this.image.height,
+            this.position.x,
+            this.position.y,
+            this.image.width / this.frames.max, // render width
+            this.image.height, // render height
+        )
     }
 };
+
+const player = new Sprite({
+    position: {
+        x: (canvas.width / 2) - 192 / 4 / 2, // center the player on the map image x axis
+        y: (canvas.height / 2) - 68 / 2, // center the player on the map image y axis
+    },
+    image: playerImage,
+    frames: {
+        max: 4
+    }
+})
 
 const background = new Sprite({
     position: {
@@ -126,6 +154,16 @@ const keys = {
     },
 }
 
+const testBoundary = new Boundary({
+    position: {
+        x: 400,
+        y: 400,
+    }
+})
+
+// create an array to store sprite objects that should be able to move position
+const moveables = [background, testBoundary]
+
 // loop over this function to animate the player sprite
 // in this case it's ok to create an infinite loop?
 function animate() {
@@ -136,31 +174,47 @@ function animate() {
     background.draw(); // render map image
 
     // boundaries
-    boundaries.forEach(boundary => boundary.draw());
+    // boundaries.forEach(boundary => boundary.draw());
+    testBoundary.draw();
 
     // player
-    context.drawImage(
-        playerImage,
-        0, // crop the player image 
-        0,
-        playerImage.width / 4,
-        playerImage.height,
-        canvas.width / 2 - playerImage.width / 4 / 2, // center the player on the map image x axis
-        canvas.height / 2 - playerImage.height / 2, // center the player on the map image y axis
-        playerImage.width / 4, // render width
-        playerImage.height, // render height
-    )
+    player.draw(); // render player image
 
-    /***** control player movement *****/
+    /***** detecting collisions *****/
+    /* 
+    
+    logic:
 
-    if (keys.w.pressed && lastKey === 'w') background.position.y = background.position.y += 3;      // up
-    else if (keys.s.pressed && lastKey === 's') background.position.y = background.position.y -= 3; // down
-    else if (keys.a.pressed && lastKey === 'a') background.position.x = background.position.x += 3; // left
-    else if (keys.d.pressed && lastKey === 'd') background.position.x = background.position.x -= 3; // right 
-};
+    1. get position of the player sprite (image) edge
+    2. get position of the boundary edge
+    3. compare the two positions
+    4. if they are equal, there is a collision
+
+    */
+
+    if (player.position.x + player.width >= testBoundary.position.x) {
+        console.log('Collision detected')
+    }
+
+    /***** user input logic: player movement *****/
+    // this code is a little counterintuitive because we are moving all the elements EXCEPT the player sprite.
+    // this creates the illusion of movement while keeping the player sprite centered on the screen
+
+    if (keys.w.pressed && lastKey === 'w') {
+        moveables.forEach(moveable => moveable.position.y += 3) // up
+    } else if (keys.s.pressed && lastKey === 's') {
+        moveables.forEach(moveable => moveable.position.y -= 3) // down
+    } else if (keys.a.pressed && lastKey === 'a') {
+        moveables.forEach(moveable => moveable.position.x += 3) // left
+    } else if (keys.d.pressed && lastKey === 'd') {
+        moveables.forEach(moveable => moveable.position.x -= 3) // right 
+    }
+}
 
 // call the animate function
 animate();
+
+/***** user input *****/
 
 // add event listener for keydown events 
 let lastKey = ''; // allows us to track the last key pressed making user input smoother
@@ -183,7 +237,7 @@ window.addEventListener('keydown', (event) => {
             lastKey = 'd'
             break;
     }
-});
+})
 
 // add event listener for keydown events 
 window.addEventListener('keyup', (event) => {
@@ -201,4 +255,4 @@ window.addEventListener('keyup', (event) => {
             keys.d.pressed = false;
             break;
     }
-});
+})
