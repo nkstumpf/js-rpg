@@ -36,15 +36,22 @@ class Boundary {
     }
 }
 
+// init boundaries
 const boundaries = [];
+
+// init offset
+const offset = {
+    x: -735,
+    y: -650,
+}
 
 collisionsMap.forEach((row, i) => {
     row.forEach((tile, j) => {
         if (tile === 1025) {
             boundaries.push(new Boundary({
                 position: { 
-                    x: j * Boundary.width, // from static values set inside Boundary class
-                    y: i * Boundary.height 
+                    x: j * Boundary.width + offset.x, // from static values set inside Boundary class
+                    y: i * Boundary.height + offset.y
                 } 
             }))
         }
@@ -96,11 +103,10 @@ class Sprite {
     }
 };
 
-
 const background = new Sprite({
     position: {
-        x: -785,
-        y: -650,
+        x: offset.x,
+        y: offset.y,
     },
     image: mapImage
 })
@@ -128,6 +134,9 @@ function animate() {
 
     // map
     background.draw(); // render map image
+
+    // boundaries
+    boundaries.forEach(boundary => boundary.draw());
 
     // player
     context.drawImage(
