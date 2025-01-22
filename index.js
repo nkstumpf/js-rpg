@@ -1,4 +1,5 @@
 console.log('js init');
+// eslint-disable-next-line no-undef
 console.log(collisions ? 'collisions loaded' : 'error loading collisions');
 
 /***** canvas setup *****/
@@ -15,7 +16,9 @@ canvas.width = 1024;
 canvas.height = 576;
 
 const collisionsMap = [];
+// eslint-disable-next-line no-undef
 for (let i = 0; i < collisions.length; i+=70) { // width of map (tiles) is 70
+// eslint-disable-next-line no-undef
     collisionsMap.push(collisions.slice(i, i + 70)); // grab the first 70 elements, then the next 70, etc.
 }
 
@@ -88,7 +91,6 @@ playerImage.src = './assets/playerDown.png';
 class Sprite {
     constructor({
         position,
-        velocity,
         image,
         frames = { max: 1 },
     }) {
@@ -154,15 +156,23 @@ const keys = {
     },
 }
 
-const testBoundary = new Boundary({
-    position: {
-        x: 400,
-        y: 400,
-    }
-})
-
 // create an array to store sprite objects that should be able to move position
-const moveables = [background, testBoundary]
+const moveables = [background, ...boundaries]
+
+// utility function for evaluating collisions
+// evalutaes position (pixel position value) of 2 rectangles...
+// adds the width / height of rect1 to the x/y position of rect1
+// then compares with position of rect2 to see the two objects in the same place (colliding)
+// or vice versa
+
+function rectangularCollision({ rect1, rect2 }) {
+    return (
+        rect1.position.x + rect1.width >= rect2.position.x && 
+        rect1.position.x <= rect2.position.x + rect2.width &&
+        rect1.position.y <= rect2.position.y + rect2.height &&
+        rect1.position.y + rect1.height >= rect2.position.y
+    )
+}
 
 // loop over this function to animate the player sprite
 // in this case it's ok to create an infinite loop?
@@ -174,27 +184,20 @@ function animate() {
     background.draw(); // render map image
 
     // boundaries
-    // boundaries.forEach(boundary => boundary.draw());
-    testBoundary.draw();
+    boundaries.forEach((boundary) => {
+        boundary.draw()
+        
+        /***** detecting collisions *****/
+        if (rectangularCollision({
+            rect1: player,
+            rect2: boundary
+        })) {
+            console.log('Collision detected')
+        }
+    });
 
     // player
     player.draw(); // render player image
-
-    /***** detecting collisions *****/
-    /* 
-    
-    logic:
-
-    1. get position of the player sprite (image) edge
-    2. get position of the boundary edge
-    3. compare the two positions
-    4. if they are equal, there is a collision
-
-    */
-
-    if (player.position.x + player.width >= testBoundary.position.x) {
-        console.log('Collision detected')
-    }
 
     /***** user input logic: player movement *****/
     // this code is a little counterintuitive because we are moving all the elements EXCEPT the player sprite.
