@@ -1,6 +1,7 @@
-console.log('js init');
-// eslint-disable-next-line no-undef
-console.log(collisions ? 'collisions loaded' : 'error loading collisions');
+/* eslint-disable no-undef */
+/* eslint-disable no-unused-vars */
+// Boundary & Sprite are defined in classes.js
+// context is used by classes.js which is being imported into this file
 
 /***** canvas setup *****/
 
@@ -16,27 +17,10 @@ canvas.width = 1024;
 canvas.height = 576;
 
 const collisionsMap = [];
-// eslint-disable-next-line no-undef
+ 
 for (let i = 0; i < collisions.length; i+=70) { // width of map (tiles) is 70
-// eslint-disable-next-line no-undef
+ 
     collisionsMap.push(collisions.slice(i, i + 70)); // grab the first 70 elements, then the next 70, etc.
-}
-
-class Boundary {
-    static width = 48;
-    static height = 48;
-    constructor({
-        position,
-    }) {
-        this.position = position;
-        this.width = 48
-        this.height = 48
-    }
-
-    draw() {
-        context.fillStyle = 'rgb(255, 0, 0, 0.2)';
-        context.fillRect(this.position.x, this.position.y, this.width, this.height);
-    }
 }
 
 // init boundaries
@@ -64,70 +48,21 @@ collisionsMap.forEach((row, i) => {
 /***** init images & place on canvas *****/
 
 // create html image element with js api
-const mapImage = new Image();
-const playerImage = new Image();
+const backgroundImg = new Image();
+const playerImg = new Image();
+const foregroundImg = new Image();
 
 // set image sources
-mapImage.src = './assets/placeholder-map.png';
-playerImage.src = './assets/playerDown.png';
-
-// when the image is loaded, draw it on the canvas
-// args are: image, x, y coordinates
-
-// context.drawImage(image, 0, 0,);
-
-// but this won't work as is because the image is not loaded yet
-// to fix this, we need to use the image.onload event
-
-// additionally- we need to make sure we load the map image first, then the player image because the map image is larger and takes longer to load
-// if we don't do this in order, the map image will be drawn over the player image and we won't see the player
-
-// Note: we then moved this draw image functionality to the animate function in order to animate the player sprite
-
-/***** player movement  *****/
-
-// create a class for the player
-// by passing arguments to the constructor via an object, we don't have to remember the specific order in which we need to pass arguments
-class Sprite {
-    constructor({
-        position,
-        image,
-        frames = { max: 1 },
-    }) {
-        this.position = position;
-        this.image = image;
-        this.frames = frames;
-
-        // need to wait until image is fully loaded
-        this.image.onload = () => {
-            this.width = this.image.width / this.frames.max
-            this.height = this.image.height
-            console.log('sprite image width: ', this.width)
-            console.log('sprite image height: ', this.height)
-        }
-    }
-
-    draw() {
-        context.drawImage(
-            this.image,
-            0, // crop the player image into 4 sections, each section is 48x48
-            0,
-            this.image.width / this.frames.max,
-            this.image.height,
-            this.position.x,
-            this.position.y,
-            this.image.width / this.frames.max, // render width
-            this.image.height, // render height
-        )
-    }
-};
+backgroundImg.src = './assets/map-background-placeholder.png';
+playerImg.src = './assets/playerDown.png';
+foregroundImg.src = './assets/map-foreground-placeholder.png';
 
 const player = new Sprite({
     position: {
         x: (canvas.width / 2) - 192 / 4 / 2, // center the player on the map image x axis
         y: (canvas.height / 2) - 68 / 2, // center the player on the map image y axis
     },
-    image: playerImage,
+    image: playerImg,
     frames: {
         max: 4
     }
@@ -138,7 +73,15 @@ const background = new Sprite({
         x: offset.x,
         y: offset.y,
     },
-    image: mapImage
+    image: backgroundImg
+})
+
+const foreground = new Sprite({
+    position: {
+        x: offset.x,
+        y: offset.y,
+    },
+    image: foregroundImg
 })
 
 const keys = {
@@ -157,7 +100,7 @@ const keys = {
 }
 
 // create an array to store sprite objects that should be able to move position
-const moveables = [background, ...boundaries]
+const moveables = [background, foreground, ...boundaries]
 
 // utility function for evaluating collisions
 // evalutaes position (pixel position value) of 2 rectangles...
@@ -191,6 +134,9 @@ function animate() {
     // player
     player.draw(); // render player image
 
+    // foreground
+    foreground.draw(); // render foreground image (needs to be last so that it renders on top of player images)
+
     /***** user input logic: player movement *****/
     // this code is a little counterintuitive because we are moving all the elements EXCEPT the player sprite.
     // this creates the illusion of movement while keeping the player sprite centered on the screen
@@ -210,7 +156,6 @@ function animate() {
                     }
                 }
             })) {
-                console.log('Collision detected')
                 moving = false;
                 break // exit the loop as soon as a collision is detected
             }
@@ -233,7 +178,6 @@ function animate() {
                         }
                     }
                 })) {
-                    console.log('Collision detected')
                     moving = false;
                     break // exit the loop as soon as a collision is detected
                 }
@@ -255,7 +199,6 @@ function animate() {
                         }
                     }
                 })) {
-                    console.log('Collision detected')
                     moving = false;
                     break // exit the loop as soon as a collision is detected
                 }
@@ -277,7 +220,6 @@ function animate() {
                         }
                     }
                 })) {
-                    console.log('Collision detected')
                     moving = false;
                     break // exit the loop as soon as a collision is detected
                 }
