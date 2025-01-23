@@ -49,12 +49,18 @@ collisionsMap.forEach((row, i) => {
 
 // create html image element with js api
 const backgroundImg = new Image();
-const playerImg = new Image();
+const playerUpImg = new Image();
+const playerDownImg = new Image();
+const playerLeftImg = new Image();
+const playerRightImg = new Image();
 const foregroundImg = new Image();
 
 // set image sources
 backgroundImg.src = './assets/map-background-placeholder.png';
-playerImg.src = './assets/playerDown.png';
+playerUpImg.src = './assets/playerUp.png';
+playerDownImg.src = './assets/playerDown.png';
+playerLeftImg.src = './assets/playerLeft.png';
+playerRightImg.src = './assets/playerRight.png';
 foregroundImg.src = './assets/map-foreground-placeholder.png';
 
 const player = new Sprite({
@@ -62,11 +68,19 @@ const player = new Sprite({
         x: (canvas.width / 2) - 192 / 4 / 2, // center the player on the map image x axis
         y: (canvas.height / 2) - 68 / 2, // center the player on the map image y axis
     },
-    image: playerImg,
+    image: playerDownImg,
     frames: {
         max: 4
+    },
+    sprites: {
+        up: playerUpImg,
+        down: playerDownImg,
+        left: playerLeftImg,
+        right: playerRightImg
     }
 })
+
+console.log('player: ', player)
 
 const background = new Sprite({
     position: {
@@ -142,7 +156,10 @@ function animate() {
     // this creates the illusion of movement while keeping the player sprite centered on the screen
 
     let moving = true // for each animation frame moving should be true (see below for collision exception)
+    player.moving = false;
     if (keys.w.pressed && lastKey === 'w') {
+        player.moving = true;
+        player.image = player.sprites.up;
         /***** detecting collisions *****/
         for (let i = 0; i < boundaries.length; i++) {
             const boundary = boundaries[i]
@@ -166,6 +183,8 @@ function animate() {
         }
 
         } else if (keys.s.pressed && lastKey === 's') {
+            player.moving = true;
+            player.image = player.sprites.down;
             for (let i = 0; i < boundaries.length; i++) {
                 const boundary = boundaries[i]
                 if (rectangularCollision({
@@ -187,6 +206,8 @@ function animate() {
                 moveables.forEach(moveable => moveable.position.y -= 3) // down
             }
         } else if (keys.a.pressed && lastKey === 'a') {
+            player.moving = true;
+            player.image = player.sprites.left;
             for (let i = 0; i < boundaries.length; i++) {
                 const boundary = boundaries[i]
                 if (rectangularCollision({
@@ -208,6 +229,8 @@ function animate() {
                 moveables.forEach(moveable => moveable.position.x += 3) // left
             }
         } else if (keys.d.pressed && lastKey === 'd') {
+            player.moving = true;
+            player.image = player.sprites.right;
             for (let i = 0; i < boundaries.length; i++) {
                 const boundary = boundaries[i]
                 if (rectangularCollision({
