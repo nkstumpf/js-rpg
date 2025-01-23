@@ -34,7 +34,7 @@ class Boundary {
     }
 
     draw() {
-        context.fillStyle = 'red';
+        context.fillStyle = 'rgb(255, 0, 0, 0.2)';
         context.fillRect(this.position.x, this.position.y, this.width, this.height);
     }
 }
@@ -186,14 +186,6 @@ function animate() {
     // boundaries
     boundaries.forEach((boundary) => {
         boundary.draw()
-        
-        /***** detecting collisions *****/
-        if (rectangularCollision({
-            rect1: player,
-            rect2: boundary
-        })) {
-            console.log('Collision detected')
-        }
     });
 
     // player
@@ -203,15 +195,98 @@ function animate() {
     // this code is a little counterintuitive because we are moving all the elements EXCEPT the player sprite.
     // this creates the illusion of movement while keeping the player sprite centered on the screen
 
+    let moving = true // for each animation frame moving should be true (see below for collision exception)
     if (keys.w.pressed && lastKey === 'w') {
+        /***** detecting collisions *****/
+        for (let i = 0; i < boundaries.length; i++) {
+            const boundary = boundaries[i]
+            if (rectangularCollision({
+                rect1: player,
+                rect2: {
+                    ...boundary, // makes a copy of the boundary object without modifying the original
+                    position: {
+                        x: boundary.position.x,
+                        y: boundary.position.y + 3 // project into the future (is there a collision 3 pixels ahead?)
+                    }
+                }
+            })) {
+                console.log('Collision detected')
+                moving = false;
+                break // exit the loop as soon as a collision is detected
+            }
+        }
+
+        if (moving) {
         moveables.forEach(moveable => moveable.position.y += 3) // up
-    } else if (keys.s.pressed && lastKey === 's') {
-        moveables.forEach(moveable => moveable.position.y -= 3) // down
-    } else if (keys.a.pressed && lastKey === 'a') {
-        moveables.forEach(moveable => moveable.position.x += 3) // left
-    } else if (keys.d.pressed && lastKey === 'd') {
-        moveables.forEach(moveable => moveable.position.x -= 3) // right 
-    }
+        }
+
+        } else if (keys.s.pressed && lastKey === 's') {
+            for (let i = 0; i < boundaries.length; i++) {
+                const boundary = boundaries[i]
+                if (rectangularCollision({
+                    rect1: player,
+                    rect2: {
+                        ...boundary, // makes a copy of the boundary object without modifying the original
+                        position: {
+                            x: boundary.position.x,
+                            y: boundary.position.y - 3 // project into the future (is there a collision 3 pixels ahead?)
+                        }
+                    }
+                })) {
+                    console.log('Collision detected')
+                    moving = false;
+                    break // exit the loop as soon as a collision is detected
+                }
+            }
+    
+            if (moving) {
+                moveables.forEach(moveable => moveable.position.y -= 3) // down
+            }
+        } else if (keys.a.pressed && lastKey === 'a') {
+            for (let i = 0; i < boundaries.length; i++) {
+                const boundary = boundaries[i]
+                if (rectangularCollision({
+                    rect1: player,
+                    rect2: {
+                        ...boundary, // makes a copy of the boundary object without modifying the original
+                        position: {
+                            x: boundary.position.x + 3,
+                            y: boundary.position.y // project into the future (is there a collision 3 pixels ahead?)
+                        }
+                    }
+                })) {
+                    console.log('Collision detected')
+                    moving = false;
+                    break // exit the loop as soon as a collision is detected
+                }
+            }
+    
+            if (moving) {
+                moveables.forEach(moveable => moveable.position.x += 3) // left
+            }
+        } else if (keys.d.pressed && lastKey === 'd') {
+            for (let i = 0; i < boundaries.length; i++) {
+                const boundary = boundaries[i]
+                if (rectangularCollision({
+                    rect1: player,
+                    rect2: {
+                        ...boundary, // makes a copy of the boundary object without modifying the original
+                        position: {
+                            x: boundary.position.x - 3,
+                            y: boundary.position.y // project into the future (is there a collision 3 pixels ahead?)
+                        }
+                    }
+                })) {
+                    console.log('Collision detected')
+                    moving = false;
+                    break // exit the loop as soon as a collision is detected
+                }
+            }
+    
+            if (moving) {
+                moveables.forEach(moveable => moveable.position.x -= 3) // right
+            } 
+        }
 }
 
 // call the animate function
