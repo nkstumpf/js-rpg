@@ -1,7 +1,8 @@
 /* eslint-disable no-undef */
 /* eslint-disable no-unused-vars */
-// Boundary & Sprite are defined in classes.js
-// context is used by classes.js which is being imported into this file
+
+// why? Boundary & Sprite are defined in classes.js
+// why? context is used by classes.js which is being imported into this file
 
 /***** canvas setup *****/
 
@@ -16,17 +17,16 @@ const context = canvas.getContext('2d');
 canvas.width = 1024;
 canvas.height = 576;
 
+// map collisions data
 const collisionsMap = [];
- 
-for (let i = 0; i < collisions.length; i+=70) { // width of map (tiles) is 70
- 
-    collisionsMap.push(collisions.slice(i, i + 70)); // grab the first 70 elements, then the next 70, etc.
+for (let i = 0; i < collisionsData.length; i+=70) { // width of map (tiles) is 70
+    collisionsMap.push(collisionsData.slice(i, i + 70)); // grab the first 70 elements, then the next 70, etc.
 }
 
 // init boundaries
 const boundaries = [];
 
-// init offset
+// init offset (this is where we want the camera positioned on the map by default)
 const offset = {
     x: -735,
     y: -650,
@@ -44,6 +44,32 @@ collisionsMap.forEach((row, i) => {
         }
     })
 })
+
+// map battle zone data
+const battleZoneMap = []; 
+for (let i = 0; i < battleZoneData.length; i+=70) {
+    battleZoneMap.push(battleZoneData.slice(i, i + 70));
+}
+
+console.log('battle zone data: ', battleZoneMap)
+
+// init battle zones
+const battleZones = [];
+
+battleZoneMap.forEach((row, i) => {
+    row.forEach((tile, j) => {
+        if (tile === 1025) {
+            battleZones.push(new Boundary({
+                position: { 
+                    x: j * Boundary.width + offset.x, // from static values set inside Boundary class
+                    y: i * Boundary.height + offset.y
+                } 
+            }))
+        }
+    })
+})
+
+
 
 /***** init images & place on canvas *****/
 
@@ -80,8 +106,6 @@ const player = new Sprite({
     }
 })
 
-console.log('player: ', player)
-
 const background = new Sprite({
     position: {
         x: offset.x,
@@ -114,7 +138,7 @@ const keys = {
 }
 
 // create an array to store sprite objects that should be able to move position
-const moveables = [background, foreground, ...boundaries]
+const moveables = [background, foreground, ...boundaries, ...battleZones]
 
 // utility function for evaluating collisions
 // evalutaes position (pixel position value) of 2 rectangles...
@@ -143,6 +167,11 @@ function animate() {
     // boundaries
     boundaries.forEach((boundary) => {
         boundary.draw()
+    });
+
+    // battle zones
+    battleZones.forEach((battleZone) => {
+        battleZone.draw()
     });
 
     // player
@@ -177,6 +206,23 @@ function animate() {
                 break // exit the loop as soon as a collision is detected
             }
         }
+        /***** detecting battle zones *****/
+        for (let i = 0; i < battleZones.length; i++) {
+            const battleZone = battleZones[i]
+            if (rectangularCollision({
+                rect1: player,
+                rect2: {
+                    ...battleZone,
+                    position: {
+                        x: battleZone.position.x,
+                        y: battleZone.position.y + 3
+                    }
+                }
+            })) {
+                console.log('entering battle zone!')
+                break
+            }
+        }
 
         if (moving) {
         moveables.forEach(moveable => moveable.position.y += 3) // up
@@ -190,15 +236,31 @@ function animate() {
                 if (rectangularCollision({
                     rect1: player,
                     rect2: {
-                        ...boundary, // makes a copy of the boundary object without modifying the original
+                        ...boundary,
                         position: {
                             x: boundary.position.x,
-                            y: boundary.position.y - 3 // project into the future (is there a collision 3 pixels ahead?)
+                            y: boundary.position.y - 3
                         }
                     }
                 })) {
                     moving = false;
-                    break // exit the loop as soon as a collision is detected
+                    break
+                }
+            }
+            for (let i = 0; i < battleZones.length; i++) {
+                const battleZone = battleZones[i]
+                if (rectangularCollision({
+                    rect1: player,
+                    rect2: {
+                        ...battleZone,
+                        position: {
+                            x: battleZone.position.x,
+                            y: battleZone.position.y - 3
+                        }
+                    }
+                })) {
+                    console.log('entering battle zone!')
+                    break
                 }
             }
     
@@ -213,15 +275,31 @@ function animate() {
                 if (rectangularCollision({
                     rect1: player,
                     rect2: {
-                        ...boundary, // makes a copy of the boundary object without modifying the original
+                        ...boundary,
                         position: {
                             x: boundary.position.x + 3,
-                            y: boundary.position.y // project into the future (is there a collision 3 pixels ahead?)
+                            y: boundary.position.y
                         }
                     }
                 })) {
                     moving = false;
-                    break // exit the loop as soon as a collision is detected
+                    break
+                }
+            }
+            for (let i = 0; i < battleZones.length; i++) {
+                const battleZone = battleZones[i]
+                if (rectangularCollision({
+                    rect1: player,
+                    rect2: {
+                        ...battleZone,
+                        position: {
+                            x: battleZone.position.x + 3,
+                            y: battleZone.position.y
+                        }
+                    }
+                })) {
+                    console.log('entering battle zone!')
+                    break
                 }
             }
     
@@ -236,15 +314,31 @@ function animate() {
                 if (rectangularCollision({
                     rect1: player,
                     rect2: {
-                        ...boundary, // makes a copy of the boundary object without modifying the original
+                        ...boundary,
                         position: {
                             x: boundary.position.x - 3,
-                            y: boundary.position.y // project into the future (is there a collision 3 pixels ahead?)
+                            y: boundary.position.y
                         }
                     }
                 })) {
                     moving = false;
-                    break // exit the loop as soon as a collision is detected
+                    break
+                }
+            }
+            for (let i = 0; i < battleZones.length; i++) {
+                const battleZone = battleZones[i]
+                if (rectangularCollision({
+                    rect1: player,
+                    rect2: {
+                        ...battleZone,
+                        position: {
+                            x: battleZone.position.x - 3,
+                            y: battleZone.position.y
+                        }
+                    }
+                })) {
+                    console.log('entering battle zone!')
+                    break
                 }
             }
     
