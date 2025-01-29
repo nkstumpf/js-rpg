@@ -54,8 +54,6 @@ for (let i = 0; i < battleZoneData.length; i += 70) {
   battleZoneMap.push(battleZoneData.slice(i, i + 70));
 }
 
-console.log("battle zone data: ", battleZoneMap);
-
 // init battle zones
 const battleZones = [];
 
@@ -158,6 +156,10 @@ function rectangularCollision({ rect1, rect2 }) {
   );
 }
 
+const battle = {
+  initiated: false
+}
+
 // loop over this function to animate the player sprite
 // in this case it's ok to create an infinite loop?
 function animate() {
@@ -187,7 +189,11 @@ function animate() {
   // this code is a little counterintuitive because we are moving all the elements EXCEPT the player sprite.
   // this creates the illusion of movement while keeping the player sprite centered on the screen
 
-  /***** detecting battle zones *****/
+  let moving = true; // for each animation frame moving should be true (see below for collision exception)
+  player.moving = false;
+
+  if (battle.initiated) return
+  /***** detecting & activating battle zones *****/
   if (keys.w.pressed || keys.s.pressed || keys.a.pressed || keys.d.pressed) {
     for (let i = 0; i < battleZones.length; i++) {
       const battleZone = battleZones[i];
@@ -211,16 +217,33 @@ function animate() {
           rect2: battleZone
         }) &&
         overlappingArea > (player.width * player.height) / 2 &&
-        Math.random() < 0.01 // only activate a battle zone 1% of the time (was happening too frequently before setting this condition)
+        Math.random() < 0.1 // only activate a battle zone 1% of the time (was happening too frequently before setting this condition)
       ) {
         console.log('Battle Zone Activated!');
+        battle.initiated = true;
+        // use the gsap library to animate the battle activation screen
+        gsap.to('#overlappingDiv', {
+          opacity: 1,
+          repeat: 4,
+          yoyo: true,
+          duration: 0.5,
+          onComplete() {
+            gsap.to('#overlappingDiv', {
+              opacity: 1,
+              duration: 0.5,
+            })
+
+            // activate a new animation loop
+
+            // deactivate current animation loop
+          }
+
+        })
         break
       }
     }
   }
 
-  let moving = true; // for each animation frame moving should be true (see below for collision exception)
-  player.moving = false;
   if (keys.w.pressed && lastKey === "w") {
     player.moving = true;
     player.image = player.sprites.up;
@@ -347,7 +370,7 @@ window.addEventListener("keydown", (event) => {
   }
 });
 
-// add event listener for keydown events
+// add event listener for keyup events
 window.addEventListener("keyup", (event) => {
   switch (event.key) {
     case "w":
