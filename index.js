@@ -191,14 +191,30 @@ function animate() {
   if (keys.w.pressed || keys.s.pressed || keys.a.pressed || keys.d.pressed) {
     for (let i = 0; i < battleZones.length; i++) {
       const battleZone = battleZones[i];
+      // Explaination:
+      // This code works by calculating the overlapping area of the player and the battle zone.
+      // If the overlapping area (of the battle zone) is greater than half the player's area, then the battle zone is activated.
+      const overlappingArea =
+        (Math.min(
+          player.position.x + player.width,
+          battleZone.position.x + battleZone.width
+        ) -
+          Math.max(player.position.x, battleZone.position.x)) *
+        (Math.min(
+          player.position.y + player.height,
+          battleZone.position.y + battleZone.height
+        ) -
+          Math.max(player.position.y, battleZone.position.y))
       if (
         rectangularCollision({
           rect1: player,
-          rect2: battleZone,
-        })
+          rect2: battleZone
+        }) &&
+        overlappingArea > (player.width * player.height) / 2 &&
+        Math.random() < 0.01 // only activate a battle zone 1% of the time (was happening too frequently before setting this condition)
       ) {
-        console.log("entering battle zone!");
-        break;
+        console.log('Battle Zone Activated!');
+        break
       }
     }
   }
