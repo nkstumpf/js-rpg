@@ -163,7 +163,7 @@ const battle = {
 // loop over this function to animate the player sprite
 // in this case it's ok to create an infinite loop?
 function animate() {
-  window.requestAnimationFrame(animate);
+  const animationId = window.requestAnimationFrame(animate);
   // args are: https://developer.mozilla.org/en-US/docs/Web/API/CanvasRenderingContext2D/drawImage
 
   // map
@@ -220,6 +220,7 @@ function animate() {
         Math.random() < 0.1 // only activate a battle zone 1% of the time (was happening too frequently before setting this condition)
       ) {
         console.log('Battle Zone Activated!');
+        window.cancelAnimationFrame(animationId); // stop the animation loop
         battle.initiated = true;
         // use the gsap library to animate the battle activation screen
         gsap.to('#overlappingDiv', {
@@ -227,15 +228,13 @@ function animate() {
           repeat: 4,
           yoyo: true,
           duration: 0.5,
-          onComplete() {
+          onComplete() { // we want to make sure we end the animation on a white screen
             gsap.to('#overlappingDiv', {
               opacity: 1,
               duration: 0.5,
             })
-
-            // activate a new animation loop
-
-            // deactivate current animation loop
+            // then activate a new animation loop which draws our batte scene background image and fades in from white screen
+            animateBattle();
           }
 
         })
@@ -344,6 +343,28 @@ function animate() {
 
 // call the animate function
 animate();
+
+// create a new image object for the battle scene background
+const battleBackgroundImage = new Image();
+battleBackgroundImage.src = "./assets/battleBackground.png";
+const battleBackground = new Sprite({
+  position: {
+    x: 0,
+    y: 0,
+  },
+  image: battleBackgroundImage,
+});
+
+// animate the battle screen
+function animateBattle() {
+  window.requestAnimationFrame(animateBattle);
+  console.log('Battle screen animation activated');
+  battleBackground.draw();
+  gsap.to('#overlappingDiv', {
+    opacity: 0,
+    duration: 0.5,
+  })
+}
 
 /***** user input *****/
 
