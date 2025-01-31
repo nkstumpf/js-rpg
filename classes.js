@@ -6,8 +6,9 @@ class Sprite {
     constructor({
         position,
         image,
-        frames = { max: 1 },
+        frames = { max: 1, hold: 10 },
         sprites,
+        animate = false,
     }) {
         this.position = position;
         this.image = image;
@@ -20,7 +21,7 @@ class Sprite {
             this.height = this.image.height
         }
 
-        this.moving = false;
+        this.animate = animate;
     }
 
     draw() {
@@ -37,8 +38,8 @@ class Sprite {
             this.image.height, // render height
         )
 
-        // ignore the following code if moving = false
-        if(!this.moving) return
+        // ignore the following code if animate = false
+        if(!this.animate) return
 
         if(this.frames.max > 1 ){
             // increment the elapsed time
@@ -48,7 +49,7 @@ class Sprite {
         // player movement animation
         // how this code works:
         // if the remainder of the current frame divided by 10 is 0 continue
-        if(this.frames.elapsed % 10 === 0) {
+        if(this.frames.elapsed % this.frames.hold === 0) {
             // if the current frame is less than the max frame, increment the frame
             if(this.frames.val < this.frames.max - 1) this.frames.val++
             else this.frames.val = 0
